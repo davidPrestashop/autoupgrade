@@ -21,20 +21,23 @@ import {
   utilsTest,
   // Import BO pages
   boDashboardPage,
-  boLoginPage,
   boProductsPage,
-  boNewExperimentalFeaturesPage,
   // Import data
   dataProducts,
   dataCategories,
 } from '@prestashop-core/ui-testing';
 
 import {
-  test, expect, Page, BrowserContext,
+  test, expect,
 } from '@playwright/test';
 import semver from 'semver';
+import {goToMenu} from '../../../fixtures/go-to-menu';
 
 const psVersion = utilsTest.getPSVersion();
+
+goToMenu.use({
+  link: {menu: boDashboardPage.catalogParentLink, subMenu: boDashboardPage.productsLink},
+});
 
 /*
   Connect to the BO
@@ -42,92 +45,19 @@ const psVersion = utilsTest.getPSVersion();
   Filter products table by ID, Name, Reference, Category, Price, Quantity and Status
   Logout from the BO
  */
-test.describe('BO - Catalog - Products : Filter the products table by ID, Name, Reference, Category, Price, Quantity and Status',
-  async () => {
-    let browserContext: BrowserContext;
-    let page: Page;
+goToMenu('BO - Catalog - Products : Filter the products table by ID, Name, Reference, Category, Price, Quantity and Status',
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async ({page, productLink}) => {
     let numberOfProducts: number = 0;
-    let isProductPageV1: boolean = false;
 
-    test.beforeAll(async ({browser}) => {
-      browserContext = await browser.newContext();
-      page = await browserContext.newPage();
-    });
-    test.afterAll(async () => {
-      await page.close();
-    });
-
-    // Steps
-    test('should login in BO', async () => {
-      await boLoginPage.goTo(page, global.BO.URL);
-      await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
-
-      const pageTitle = await boDashboardPage.getPageTitle(page);
-      expect(pageTitle).toContain(boDashboardPage.pageTitle);
-    });
-
-    test('should go to \'Catalog > Products\' page', async () => {
-      await boDashboardPage.goToSubMenu(
-        page,
-        boDashboardPage.catalogParentLink,
-        boDashboardPage.productsLink,
-      );
-      await boProductsPage.closeSfToolBar(page);
-
-      const pageTitle = await boProductsPage.getPageTitle(page);
-      expect(pageTitle).toContain(boProductsPage.pageTitle);
-
-      isProductPageV1 = !await boProductsPage.isProductPageV2(page);
-    });
-
-    test('should go to \'Advanced Parameters > New & Experimental Features\' page', async () => {
-      if (semver.gte(psVersion, '8.1.0') && isProductPageV1) {
-        await boDashboardPage.goToSubMenu(
-          page,
-          boDashboardPage.advancedParametersLink,
-          boDashboardPage.featureFlagLink,
-        );
-        await boNewExperimentalFeaturesPage.closeSfToolBar(page);
-
-        const pageTitle = await boNewExperimentalFeaturesPage.getPageTitle(page);
-        await expect(pageTitle).toContain(boNewExperimentalFeaturesPage.pageTitle);
-      } else {
-        test.skip();
-      }
-    });
-
-    test('should enable product page V2', async () => {
-      if (semver.gte(psVersion, '8.1.0') && isProductPageV1) {
-        const successMessage = await boNewExperimentalFeaturesPage.setFeatureFlag(
-          page, boNewExperimentalFeaturesPage.featureFlagProductPageV2, true);
-        await expect(successMessage).toContain(boNewExperimentalFeaturesPage.successfulUpdateMessage);
-      } else {
-        test.skip();
-      }
-    });
-
-    test('should go back to \'Catalog > Products\' page', async () => {
-      if (semver.gte(psVersion, '8.1.0') && isProductPageV1) {
-        await boDashboardPage.goToSubMenu(
-          page,
-          boDashboardPage.catalogParentLink,
-          boDashboardPage.productsLink,
-        );
-        await boProductsPage.closeSfToolBar(page);
-
-        const pageTitle = await boProductsPage.getPageTitle(page);
-        expect(pageTitle).toContain(boProductsPage.pageTitle);
-      } else {
-        test.skip();
-      }
-    });
-
-    test('should check that no filter is applied by default', async () => {
+    await test.step('should check that no filter is applied by default', async () => {
       const isVisible = await boProductsPage.isResetButtonVisible(page);
       expect(isVisible, 'Reset button is visible!').toEqual(false);
     });
 
-    test('should get the number of products', async () => {
+    await test.step('should get the number of products', async () => {
+      const isProductPageV1 = !await boProductsPage.isProductPageV2(page);
+
       if (semver.lt(psVersion, '8.1.0') || isProductPageV1) {
         numberOfProducts = await boProductsPage.getNumberOfProductsFromList(page);
       } else {
@@ -136,117 +66,116 @@ test.describe('BO - Catalog - Products : Filter the products table by ID, Name, 
       expect(numberOfProducts).toBeGreaterThan(0);
     });
 
-    [
-      {
-        args: {
-          identifier: 'filterIDMinMax',
-          filterBy: 'id_product',
-          filterValue: {min: 5, max: 10},
-          // For PS version <= 1.7.2
-          oldFilterValue: {min: 3, max: 7},
-          filterType: 'input',
-        },
-      },
-      {
-        args: {
-          identifier: 'filterName',
-          filterBy: 'product_name',
-          filterValue: dataProducts.demo_14.name,
-          // For PS version <= 1.7.2
-          oldFilterValue: dataProducts.old_demo_4.name,
-          filterType: 'input',
-        },
-      },
-      {
-        args: {
-          identifier: 'filterReference',
-          filterBy: 'reference',
-          filterValue: dataProducts.demo_14.reference,
-          // For PS version <= 1.7.2
-          oldFilterValue: dataProducts.old_demo_7.reference,
-          filterType: 'input',
-        },
-      },
-      {
-        args: {
-          identifier: 'filterCategory',
-          filterBy: 'category',
-          filterValue: dataCategories.art.name,
-          // For PS version <= 1.7.2
-          oldFilterValue: dataProducts.old_demo_3.category,
-          filterType: 'input',
-        },
-      },
-      {
-        args: {
-          identifier: 'filterPriceMinMax',
-          filterBy: 'price',
-          filterValue: {min: 5, max: 10},
-          // For PS version <= 1.7.2
-          oldFilterValue: {min: 20, max: 30},
-          filterType: 'input',
-        },
-      },
-      {
-        args: {
-          identifier: 'filterQuantityMinMax',
-          filterBy: 'quantity',
-          filterValue: {min: 1300, max: 1500},
-          // For PS version <= 1.7.2
-          oldFilterValue: {min: 900, max: 1500},
-          filterType: 'input',
-        },
-      },
-      {
-        args: {
-          identifier: 'filterStatus',
-          filterBy: 'active',
-          filterValue: 'Yes',
-          // For PS version <= 1.7.2
-          oldFilterValue: 'Yes',
-          filterType: 'select',
-        },
-      },
-    ].forEach((tst) => {
-      test(`should filter list by '${tst.args.filterBy}' and check result`, async () => {
+    const executeStep = async (args :{
+      identifier: string,
+      filterBy: string,
+      filterValue: string | {min: number, max: number},
+      // For PS version <= 1.7.2
+      oldFilterValue: string | {min: number, max: number},
+      filterType: string,
+    }) => {
+      await test.step(`should filter list by '${args.filterBy}' and check result`, async () => {
         let filterValue: any = '';
 
         if (numberOfProducts > 7) {
           // For PS version > 1.7.2
-          filterValue = tst.args.filterValue;
+          filterValue = args.filterValue;
         } else {
           // For PS version <= 1.7.2
-          filterValue = tst.args.oldFilterValue;
+          filterValue = args.oldFilterValue;
         }
 
-        if (semver.lt(psVersion, '8.1.0') && tst.args.filterBy === 'active') {
-          await boProductsPage.filterProducts(page, tst.args.filterBy, 'Active', tst.args.filterType);
+        if (semver.lt(psVersion, '8.1.0') && args.filterBy === 'active') {
+          await boProductsPage.filterProducts(page, args.filterBy, 'Active', args.filterType);
         } else {
-          await boProductsPage.filterProducts(page, tst.args.filterBy, filterValue, tst.args.filterType);
+          await boProductsPage.filterProducts(page, args.filterBy, filterValue, args.filterType);
         }
         const numberOfProductsAfterFilter = await boProductsPage.getNumberOfProductsFromList(page);
 
-        if (tst.args.filterBy === 'active') {
+        if (args.filterBy === 'active') {
           expect(numberOfProductsAfterFilter).toBeGreaterThan(0);
         } else {
           expect(numberOfProductsAfterFilter).toBeLessThan(numberOfProducts);
         }
 
         for (let i = 1; i <= numberOfProductsAfterFilter; i++) {
-          const textColumn = await boProductsPage.getTextColumn(page, tst.args.filterBy, i);
+          const textColumn = await boProductsPage.getTextColumn(page, args.filterBy, i);
 
           if (typeof filterValue !== 'string') {
             expect(textColumn).toBeGreaterThanOrEqual(filterValue.min);
             expect(textColumn).toBeLessThanOrEqual(filterValue.max);
-          } else if (tst.args.filterBy === 'active') {
+          } else if (args.filterBy === 'active') {
             expect(textColumn).toEqual(true);
           } else {
             expect(textColumn).toContain(filterValue);
           }
         }
       });
+    };
 
-      test(`should reset filter by '${tst.args.filterBy}'`, async () => {
+    const params = [
+      {
+        identifier: 'filterIDMinMax',
+        filterBy: 'id_product',
+        filterValue: {min: 5, max: 10},
+        // For PS version <= 1.7.2
+        oldFilterValue: {min: 3, max: 7},
+        filterType: 'input',
+      },
+      {
+        identifier: 'filterName',
+        filterBy: 'product_name',
+        filterValue: dataProducts.demo_14.name,
+        // For PS version <= 1.7.2
+        oldFilterValue: dataProducts.old_demo_4.name,
+        filterType: 'input',
+      },
+      {
+        identifier: 'filterReference',
+        filterBy: 'reference',
+        filterValue: dataProducts.demo_14.reference,
+        // For PS version <= 1.7.2
+        oldFilterValue: dataProducts.old_demo_7.reference,
+        filterType: 'input',
+      },
+      {
+        identifier: 'filterCategory',
+        filterBy: 'category',
+        filterValue: dataCategories.art.name,
+        // For PS version <= 1.7.2
+        oldFilterValue: dataProducts.old_demo_3.category,
+        filterType: 'input',
+      },
+      {
+        identifier: 'filterPriceMinMax',
+        filterBy: 'price',
+        filterValue: {min: 5, max: 10},
+        // For PS version <= 1.7.2
+        oldFilterValue: {min: 20, max: 30},
+        filterType: 'input',
+      },
+      {
+        identifier: 'filterQuantityMinMax',
+        filterBy: 'quantity',
+        filterValue: {min: 1300, max: 1500},
+        // For PS version <= 1.7.2
+        oldFilterValue: {min: 900, max: 1500},
+        filterType: 'input',
+      },
+      {
+        identifier: 'filterStatus',
+        filterBy: 'active',
+        filterValue: 'Yes',
+        // For PS version <= 1.7.2
+        oldFilterValue: 'Yes',
+        filterType: 'select',
+      },
+    ];
+
+    params.forEach(async (args) => {
+      await executeStep(args);
+
+      await test.step(`should reset filter by '${args.filterBy}'`, async () => {
         const numberOfProductsAfterReset = await boProductsPage.resetAndGetNumberOfLines(page);
         expect(numberOfProductsAfterReset).toEqual(numberOfProducts);
       });

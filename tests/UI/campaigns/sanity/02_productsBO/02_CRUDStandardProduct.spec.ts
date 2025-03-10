@@ -35,8 +35,13 @@ import {
   test, expect, Page, BrowserContext,
 } from '@playwright/test';
 import semver from 'semver';
+import {goToMenu} from '../../../fixtures/go-to-menu';
 
 const psVersion = utilsTest.getPSVersion();
+
+goToMenu.use({
+  link: {menu: boDashboardPage.catalogParentLink, subMenu: boDashboardPage.productsLink},
+});
 
 /*
   Connect to the BO
