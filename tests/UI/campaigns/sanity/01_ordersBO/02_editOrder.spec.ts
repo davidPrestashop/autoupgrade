@@ -31,38 +31,40 @@ import {
 } from '@playwright/test';
 import {goToMenu} from '../../../fixtures/go-to-menu';
 
-goToMenu.use({
-  link: {menu: boDashboardPage.ordersParentLink, subMenu: boDashboardPage.ordersLink},
-});
-
 /*
-  Edit the first order
-  Logout from the BO
- */
-goToMenu('BO - Orders - Orders : Edit Order BO', async ({page, navigateTo}) => {
+Edit the first order
+Logout from the BO
+*/test.describe('BO - Orders - Orders : Edit Order BO', () => {
+  goToMenu.use({
+    link: {menu: boDashboardPage.ordersParentLink, subMenu: boDashboardPage.ordersLink},
+  });
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  goToMenu('Go to Orders page', async ({page, navigateTo}) => {
   // Steps
-  await test.step('should go to the first order page', async () => {
-    await boOrdersPage.goToOrder(page, 1);
+    await test.step('should go to the first order page', async () => {
+      await boOrdersPage.goToOrder(page, 1);
 
-    const pageTitle = await boOrdersViewBlockProductsPage.getPageTitle(page);
-    expect(pageTitle).toContain(boOrdersViewBlockProductsPage.pageTitle);
-  });
+      const pageTitle = await boOrdersViewBlockProductsPage.getPageTitle(page);
+      expect(pageTitle).toContain(boOrdersViewBlockProductsPage.pageTitle);
+    });
 
-  await test.step('should modify the product quantity and check the validation', async () => {
-    const newQuantity = await boOrdersViewBlockProductsPage.modifyProductQuantity(page, 1, 5);
-    expect(newQuantity, 'Quantity was not updated').toEqual(5);
-  });
+    await test.step('should modify the product quantity and check the validation', async () => {
+      const newQuantity = await boOrdersViewBlockProductsPage.modifyProductQuantity(page, 1, 5);
+      expect(newQuantity, 'Quantity was not updated').toEqual(5);
+    });
 
-  await test.step('should modify the order status and check the validation', async () => {
-    const orderStatus = await boOrdersViewBasePage.modifyOrderStatus(page, dataOrderStatuses.paymentAccepted.name);
-    expect(orderStatus).toEqual(dataOrderStatuses.paymentAccepted.name);
-  });
+    await test.step('should modify the order status and check the validation', async () => {
+      const orderStatus = await boOrdersViewBasePage.modifyOrderStatus(page, dataOrderStatuses.paymentAccepted.name);
+      expect(orderStatus).toEqual(dataOrderStatuses.paymentAccepted.name);
+    });
 
-  // Logout from BO
-  await test.step('should log out from BO', async () => {
-    await boLoginPage.logoutBO(page);
+    // Logout from BO
+    await test.step('should log out from BO', async () => {
+      await boLoginPage.logoutBO(page);
 
-    const pageTitle = await boLoginPage.getPageTitle(page);
-    expect(pageTitle).toContain(boLoginPage.pageTitle);
+      const pageTitle = await boLoginPage.getPageTitle(page);
+      expect(pageTitle).toContain(boLoginPage.pageTitle);
+    });
   });
 });
