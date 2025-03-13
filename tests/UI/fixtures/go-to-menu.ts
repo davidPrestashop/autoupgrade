@@ -7,6 +7,7 @@ import {
   utilsTest,
 } from '@prestashop-core/ui-testing';
 import semver from 'semver';
+import closeSymfonyToolBar from './product-wtf';
 
 export type MenuFixture = {
     login: string;
@@ -26,6 +27,9 @@ export const goToMenu = base.extend<MenuFixture>({
       // await boLoginPage.successLogin(page, global.BO.EMAIL, global.BO.PASSWD);
       await boLoginPage.goTo(page, 'http://localhost:8000/admin-dev');
       await boLoginPage.successLogin(page, 'admin@prestashop.com', 'prestashop');
+
+      const pageTitle = await boDashboardPage.getPageTitle(page);
+      expect(pageTitle).toContain(boDashboardPage.pageTitle);
     });
 
     await use('');
@@ -40,6 +44,9 @@ export const goToMenu = base.extend<MenuFixture>({
         link.subMenu,
       );
       await boProductsPage.closeSfToolBar(page);
+
+      const pageTitle = await boProductsPage.getPageTitle(page);
+      expect(pageTitle).toContain(boProductsPage.pageTitle);
     });
     await use('');
   },
