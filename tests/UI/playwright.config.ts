@@ -22,7 +22,7 @@ import path from 'path';
 
 function loadGlobal(): void {
   global.FO = {
-    URL: process.env.URL_FO || 'http://localhost/',
+    URL: process.env.URL_FO || 'http://localhost:8000/',
   };
 
   /*
