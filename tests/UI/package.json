@@ -34,8 +34,8 @@
         "typescript-eslint": "^8.29.1"
     },
     "dependencies": {
-        "@playwright/test": "^1.44.0",
-        "@prestashop-core/ui-testing": "https://github.com/PrestaShop/ui-testing-library#pull/523/head",
+        "@playwright/test": "^1.48.1",
+        "@prestashop-core/ui-testing": "https://github.com/PrestaShop/ui-testing-library#main",
         "dotenv": "^16.3.1",
         "maildev": "^2.2.1",
         "mysql2": "^3.10.0",
